@@ -27,15 +27,15 @@ program main
 !========================================================================
 
  IMPLICIT REAL*8 (A-H,O-Z)
-Real :: angle1,angle2,angle3,rot_v1(3),rot_v2(3),pi
-real*8 ::coords(3),grain,el,sizetest,size2,tauo,Kval,mval,knew,   &
-    term11,term22,offset
+!Real :: angle1,angle2,angle3,rot_v1(3),rot_v2(3),pi
+real*8 ::coords(3),grain,el!,sizetest,size2,tauo,Kval,mval,knew,   &
+    !term11,term22,offset
 real*8, allocatable :: elcent(:,:),boundgrain(:,:), orient(:),    &
     oriensh(:,:),nodex(:,:), nodey(:,:), nodez(:,:),              &
-    rdistance(:),ldistance(:),lm(:),voxarray(:,:),taunew(:,:),    &
-    voxarray2(:,:)
-integer*8 :: i, l,j,totalels,nodeout,index, feature,totalfeat,    &
-            n,b
+    rdistance(:),ldistance(:),lm(:)!,voxarray(:,:),taunew(:,:),    &
+    !voxarray2(:,:)
+integer*8 :: i, j,totalels,nodeout,index, feature,totalfeat    !& ! l,
+            !n,b
 
 PARAMETER (ND=150)
 Dimension :: SLPDIR(3,ND), SLPNOR(3,ND),ispdir(3),ispnor(3)
@@ -63,7 +63,7 @@ index=int(el)
     allocate (oriensh(totalfeat,3))
     include 'orien.inc'
     ! need to read in the euler angles
-    oriensh=reshape(orient, (/totalfeat,3/), order=(/2,1/))
+    oriensh=reshape(orient, (/int(totalfeat,4),3/), order=(/2,1/))
 
 
 ! check which voxel it is and then find the coordinates associated with 
@@ -95,7 +95,7 @@ print *, 'distance to boundary=', rdistance
 print *, 'Luster-Morris parameter=',lm
 !************************************************************
 
-end program
+contains
 
 !----------------------------------------------------------------------------------------
 !subroutine containing the length scale calculation which can be added to crystal plasticity
@@ -125,9 +125,9 @@ subroutine lengthscale(coords,nodeout,totalfeat,nodex,nodey,nodez,      &
 
 IMPLICIT REAL*8 (A-H,O-Z)
 parameter(nd=150)
-integer :: i, arraysize, nodeout,totalfeat,feature,tester,grainb,&
-    arraysizeb,val,noel,valb
-integer*8 :: minindexsing
+integer :: i, arraysize, tester,grainb,&
+    arraysizeb,val,valb
+integer*8 :: minindexsing, totalfeat, nodeout,feature, noel
 real*8, allocatable :: elcent(:,:), boundgrain(:,:),             &
     nodex(:,:), nodey(:,:), nodez(:,:),mindist(:),vect(:,:),     &
     sortmindist(:),sortedbgrains(:),uniqu(:),       			 &
@@ -200,13 +200,13 @@ logical :: locgrain= .False.
     vect(1,:)=nodex(int(feature),1:arraysize)-coords(1)
     vect(2,:)=nodey(int(feature),1:arraysize)-coords(2)
     vect(3,:)=nodez(int(feature),1:arraysize)-coords(3)
-    vectotal=(/vect(1,:),vect(2,:),vect(3,:)/)
+    !vectotal=(/vect(1,:),vect(2,:),vect(3,:)/)
    	
 	allocate (mindist(arraysize))
-	allocate (sortmindist(arraysize))
+	!allocate (sortmindist(arraysize))
 	allocate (mk(arraysize))
 	allocate (minindex(arraysize))
-	allocate (sortedbgrains(arraysize))
+	!allocate (sortedbgrains(arraysize))
       
 ! calculate the distance of the current location to the grain boundary and
 ! multiplying to bring distances to microns
@@ -363,7 +363,7 @@ logical :: locgrain= .False.
    
  
    
-   if (locgrain == .FALSE.) then
+   if (locgrain .eqv. .FALSE.) then
    !voxel not on the boundary
 
 
@@ -477,7 +477,7 @@ logical :: locgrain= .False.
     ! If not, progress in the following
     allocate (vectrnorm(size(slpdirrotate,1)))
     allocate (slpdirrotatenorm(size(slpdirrotate,1)))
-    if (locgrain == .FALSE.)then
+    if (locgrain .eqv. .FALSE.)then
      
         call enorm(vectr,size(slpdirrotate,1),vectrnorm)
         do i=1,size(slpdirrotate,1)
@@ -560,7 +560,7 @@ logical :: locgrain= .False.
      !is unreliable
      allocate (vecb(size(slpdirrotate,1),3))
      allocate (veca(size(slpdirrotate,1),3))
-     if (locgrain == .FALSE.)then
+     if (locgrain .eqv. .FALSE.)then
         !vector from shared bounday nodes to 
         vecb=lxnodes-rnodes
         !vector from voxel to shared boundary
@@ -612,7 +612,7 @@ logical :: locgrain= .False.
         
 
    
-     deallocate (vect,mindist  ,sortmindist, mk, minindex,sortedbgrains,  &
+     deallocate (vect,mindist, mk, minindex,  & !sortedbgrains,sortmindist
                 slpdirrotate,slpplanrotate,slpdirrotatea,   &
                 slpplanrotatea,grainboundindex,featureboundsnodes,        &
                 bxvalue,byvalue,bzvalue,btotal,bangle,normarray,normslp,  &
@@ -628,7 +628,7 @@ logical :: locgrain= .False.
 
 
 
-end subroutine grainsize
+end subroutine lengthscale
 !----------------------------------------------------------------------------
 ! form rotation matrix based on Euler angles
 subroutine eulercosmatrix(orient,totalrot)
@@ -792,10 +792,8 @@ SUBROUTINE boundfeat(boundgrain)
 	
 	subroutine enorm(array,val,normarray)
 	real*8, allocatable, intent(in) :: array(:,:)
-	integer*8, intent(in) :: val
+	integer, intent(in) :: val
 	real*8 :: normarray(val)
-    
-
 	
 	 normarray=(array(:,1)**2.0 + array(:,2)**2.0 + array(:,3)**2.0)**0.50
 	
@@ -1100,3 +1098,4 @@ SUBROUTINE boundfeat(boundgrain)
            RETURN
            END
            
+end program
